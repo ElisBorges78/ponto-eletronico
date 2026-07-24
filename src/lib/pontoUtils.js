@@ -115,16 +115,59 @@ export function getSaudacao() {
   return "Boa noite";
 }
 
-export function verificarHorarioPermitido(config) {
-  if (!config || !config.hora_abertura || !config.hora_fechamento) {
+function parseHoraMinutos(horaStr) {
+  if (!horaStr) return null;
+  const parts = horaStr.split(":");
+  if (parts.length !== 2) return null;
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+export function verificarRestricaoHorario(config, acao) {
+  if (!config || !config.restricoes_ativas) return { permitido: true };
+
+  if (acao === "saida_almoco" || acao === "retorno_almoco") {
     return { permitido: true };
   }
-  const horaAtual = format(new Date(), "HH:mm");
-  const permitido =
-    horaAtual >= config.hora_abertura && horaAtual <= config.hora_fechamento;
-  return {
-    permitido,
-    horaAbertura: config.hora_abertura,
-    horaFechamento: config.hora_fechamento,
-  };
+
+  const agora = new Date();
+  const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
+
+  if (acao === "entrada") {
+    const min = parseHoraMinutos(config.hora_min_entrada);
+    const max = parseHoraMinutos(config.hora_max_entrada);
+    if (min !== null && minutosAtuais < min) {
+      return {
+        permitido: false,
+        mensagem: `Entrada permitida apenas a partir de ${config.hora_min_entrada}.`,
+      };
+    }
+    if (max !== null && minutosAtuais > max) {
+      return {
+        permitido: false,
+        mensagem: `Entrada permitida apenas até ${config.hora_max_entrada}.`,
+      };
+    }
+  }
+
+  if (acao === "saida") {
+    const min = parseHoraMinutos(config.hora_min_saida);
+    const max = parseHoraMinutos(config.hora_max_saida);
+    if (min !== null && minutosAtuais < min) {
+      return {
+        permitido: false,
+        mensagem: `Saída permitida apenas a partir de ${config.hora_min_saida}.`,
+      };
+    }
+    if (max !== null && minutosAtuais > max) {
+      return {
+        permitido: false,
+        mensagem: `Saída permitida apenas até ${config.hora_max_saida}.`,
+      };
+    }
+  }
+
+  return { permitido: true };
 }

@@ -44,7 +44,7 @@ import ProfessorStatsTable from "@/components/ponto/ProfessorStatsTable";
 import SenhaGate from "@/components/ponto/SenhaGate";
 import UserManagement from "@/components/ponto/UserManagement";
 import SenhaAdminCard from "@/components/ponto/SenhaAdminCard";
-import HorariosConfig from "@/components/ponto/HorariosConfig";
+import ConfiguracaoPontoCard from "@/components/ponto/ConfiguracaoPontoCard";
 import AjusteModal from "@/components/ponto/AjusteModal";
 import { formatarDataCurta } from "@/lib/pontoUtils";
 
@@ -372,7 +372,7 @@ export default function Admin() {
           transition={{ delay: 0.14 }}
           className="mb-8"
         >
-          <HorariosConfig />
+          <ConfiguracaoPontoCard />
         </motion.div>
 
         {/* Recent Activity */}

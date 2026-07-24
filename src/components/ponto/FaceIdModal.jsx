@@ -15,7 +15,7 @@ import {
   getDataHoje,
   formatarHora,
   getProximaAcao,
-  verificarHorarioPermitido,
+  verificarRestricaoHorario,
 } from "@/lib/pontoUtils";
 
 export default function FaceIdModal({ open, onClose, onSuccess }) {
@@ -202,27 +202,23 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
   };
 
   const registrarPonto = async (professor) => {
-    try {
-      const configs = await Configuracao.list();
-      if (configs.length > 0) {
-        const restricao = verificarHorarioPermitido(configs[0]);
-        if (!restricao.permitido) {
-          setErrorMessage(
-            `Registro permitido apenas das ${restricao.horaAbertura} às ${restricao.horaFechamento}.`
-          );
-          setStep("error");
-          return null;
-        }
-      }
-    } catch {
-      // Se não houver configuração, permite o registro
-    }
-
     const hoje = getDataHoje();
     const existing = await RegistroPonto.filter({
       data: hoje,
       professor_id: professor.id,
     });
+
+    const acao = existing.length === 0 ? "entrada" : getProximaAcao(existing[0]);
+
+    const configs = await Configuracao.list();
+    if (configs.length > 0) {
+      const restricao = verificarRestricaoHorario(configs[0], acao);
+      if (!restricao.permitido) {
+        setErrorMessage(restricao.mensagem);
+        setStep("error");
+        return null;
+      }
+    }
 
     const agora = new Date().toISOString();
 
