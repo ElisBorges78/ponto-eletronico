@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { RegistroPonto } from "@/entities/RegistroPonto";
 import { Professor } from "@/entities/Professor";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   BarChart,
   Bar,
@@ -17,6 +18,8 @@ import {
   Calendar,
   TrendingUp,
   Activity,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -40,6 +43,8 @@ import {
 import ProfessorStatsTable from "@/components/ponto/ProfessorStatsTable";
 import SenhaGate from "@/components/ponto/SenhaGate";
 import UserManagement from "@/components/ponto/UserManagement";
+import AjusteModal from "@/components/ponto/AjusteModal";
+import { formatarDataCurta } from "@/lib/pontoUtils";
 
 export default function Admin() {
   const [registros, setRegistros] = useState([]);
@@ -47,6 +52,8 @@ export default function Admin() {
   const [isLoading, setIsLoading] = useState(true);
   const [filtroMes, setFiltroMes] = useState(format(new Date(), "yyyy-MM"));
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("admin_unlocked") === "true");
+  const [ajusteModal, setAjusteModal] = useState({ open: false, registro: null });
+  const [deleteModal, setDeleteModal] = useState({ open: false, registro: null });
 
   const handleUnlock = () => {
     setUnlocked(true);
@@ -135,6 +142,18 @@ export default function Admin() {
       })
       .slice(0, 8);
   }, [registros]);
+
+  const handleDeleteConfirm = async () => {
+    const registro = deleteModal.registro;
+    if (!registro) return;
+    try {
+      await RegistroPonto.delete(registro.id);
+      setDeleteModal({ open: false, registro: null });
+      loadData();
+    } catch (error) {
+      console.error("Erro ao excluir registro:", error);
+    }
+  };
 
   if (!unlocked) {
     return (
@@ -378,26 +397,48 @@ export default function Admin() {
                           </p>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-slate-500">
-                          {registro.entrada && (
-                            <span className="tabular-nums">
-                              {formatarHora(registro.entrada)}
-                            </span>
-                          )}
-                          {registro.saida && (
-                            <span className="tabular-nums">
-                              → {formatarHora(registro.saida)}
-                            </span>
-                          )}
+                           {registro.entrada && (
+                             <span className="tabular-nums">
+                               {formatarHora(registro.entrada)}
+                             </span>
+                           )}
+                           {registro.saida && (
+                             <span className="tabular-nums">
+                               → {formatarHora(registro.saida)}
+                             </span>
+                           )}
+                         </div>
+                         <span
+                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.badge}`}
+                         >
+                           <span
+                             className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`}
+                           />
+                           {statusConfig.label}
+                         </span>
+                         <div className="flex items-center gap-1">
+                           <Button
+                             size="sm"
+                             variant="ghost"
+                             className="h-7 px-2 text-slate-500 hover:text-emerald-600"
+                             onClick={() =>
+                               setAjusteModal({ open: true, registro })
+                             }
+                           >
+                             <Pencil className="w-3.5 h-3.5" />
+                           </Button>
+                           <Button
+                             size="sm"
+                             variant="ghost"
+                             className="h-7 px-2 text-slate-500 hover:text-red-600 hover:bg-red-50"
+                             onClick={() =>
+                               setDeleteModal({ open: true, registro })
+                             }
+                           >
+                             <Trash2 className="w-3.5 h-3.5" />
+                           </Button>
+                         </div>
                         </div>
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.badge}`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot}`}
-                          />
-                          {statusConfig.label}
-                        </span>
-                      </div>
                     );
                   })}
                 </div>
@@ -405,6 +446,21 @@ export default function Admin() {
             </CardContent>
           </Card>
         </motion.div>
+        <AjusteModal
+          open={ajusteModal.open}
+          onClose={() => setAjusteModal({ open: false, registro: null })}
+          registro={ajusteModal.registro}
+          onSaved={loadData}
+        />
+
+        <SenhaGate
+          open={deleteModal.open}
+          onClose={() => setDeleteModal({ open: false, registro: null })}
+          onSuccess={handleDeleteConfirm}
+          title="Excluir registro de ponto"
+          description={`Confirme a senha para excluir o registro de ${deleteModal.registro?.professor_nome || ""} (${formatarDataCurta(deleteModal.registro?.data)}). Esta ação não pode ser desfeita.`}
+          confirmLabel="Excluir registro"
+        />
       </div>
     </div>
   );
