@@ -1,0 +1,58 @@
+{
+  "name": "Conversation",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "description": "User or assistant message"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "assistant"
+      ],
+      "description": "Message sender role"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Message timestamp"
+    },
+    "language": {
+      "type": "string",
+      "default": "en",
+      "description": "Conversation language"
+    }
+  },
+  "required": [
+    "message",
+    "role"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

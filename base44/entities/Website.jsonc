@@ -1,0 +1,116 @@
+{
+  "name": "Website",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Website title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the website"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "business",
+        "portfolio",
+        "blog",
+        "ecommerce",
+        "landing",
+        "restaurant",
+        "agency",
+        "startup",
+        "nonprofit",
+        "education"
+      ],
+      "description": "Website category/type"
+    },
+    "language": {
+      "type": "string",
+      "default": "en",
+      "description": "Website language code"
+    },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "modern",
+        "minimal",
+        "corporate",
+        "creative",
+        "elegant",
+        "bold"
+      ],
+      "default": "modern",
+      "description": "Website theme"
+    },
+    "color_scheme": {
+      "type": "string",
+      "enum": [
+        "blue",
+        "purple",
+        "green",
+        "orange",
+        "red",
+        "pink",
+        "teal",
+        "gray"
+      ],
+      "default": "blue",
+      "description": "Primary color scheme"
+    },
+    "html_content": {
+      "type": "string",
+      "description": "Generated HTML content"
+    },
+    "css_content": {
+      "type": "string",
+      "description": "Generated CSS styles"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "generating",
+        "completed",
+        "error"
+      ],
+      "default": "generating",
+      "description": "Generation status"
+    },
+    "generation_prompt": {
+      "type": "string",
+      "description": "Original user prompt for generation"
+    }
+  },
+  "required": [
+    "title",
+    "description",
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

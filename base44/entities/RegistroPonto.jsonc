@@ -1,0 +1,64 @@
+{
+  "name": "RegistroPonto",
+  "type": "object",
+  "properties": {
+    "data": {
+      "type": "string",
+      "format": "date",
+      "description": "Data do registro (YYYY-MM-DD)"
+    },
+    "entrada": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Hor\u00e1rio de entrada"
+    },
+    "saida_almoco": {
+      "type": "string",
+      "format": "date-time",
+      "description": "In\u00edcio do intervalo de almo\u00e7o"
+    },
+    "retorno_almoco": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Fim do intervalo de almo\u00e7o"
+    },
+    "saida": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Hor\u00e1rio de sa\u00edda"
+    },
+    "observacao": {
+      "type": "string",
+      "description": "Observa\u00e7\u00f5es do dia"
+    }
+  },
+  "required": [
+    "data"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
