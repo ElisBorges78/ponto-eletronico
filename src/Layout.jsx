@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { User } from "@/entities/User";
-import { Clock, Calendar, BarChart3, LogOut, Menu, X } from "lucide-react";
+import { Clock, Calendar, BarChart3, LogOut, Menu, X, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -12,6 +12,12 @@ const navigationItems = [
     url: createPageUrl("Dashboard"),
     icon: Clock,
     description: "Bater ponto e ver status",
+  },
+  {
+    title: "Professores",
+    url: createPageUrl("Professores"),
+    icon: Users,
+    description: "Cadastro e Face ID",
   },
   {
     title: "Histórico",

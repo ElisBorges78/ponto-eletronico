@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { RegistroPonto } from "@/entities/RegistroPonto";
+import { User } from "@/entities/User";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Calendar, Clock, Coffee, DoorOpen, LogIn, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Calendar,
+  Coffee,
+  DoorOpen,
+  LogIn,
+  LogOut,
+  Shield,
+  Pencil,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { format, parseISO, isSameMonth, startOfMonth, endOfMonth } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { parseISO } from "date-fns";
 import {
   formatarHora,
   formatarDataCurta,
@@ -16,15 +24,28 @@ import {
   getStatus,
   STATUS_CONFIG,
 } from "@/lib/pontoUtils";
+import AjusteModal from "@/components/ponto/AjusteModal";
 
 export default function Projects() {
   const [registros, setRegistros] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtroMes, setFiltroMes] = useState("");
+  const [user, setUser] = useState(null);
+  const [ajusteModal, setAjusteModal] = useState({ open: false, registro: null });
 
   useEffect(() => {
     loadRegistros();
+    loadUser();
   }, []);
+
+  const loadUser = async () => {
+    try {
+      const currentUser = await User.me();
+      setUser(currentUser);
+    } catch {
+      // not logged in
+    }
+  };
 
   const loadRegistros = async () => {
     setIsLoading(true);
@@ -36,6 +57,8 @@ export default function Projects() {
     }
     setIsLoading(false);
   };
+
+  const isAdmin = user?.role === "admin";
 
   const registrosFiltrados = useMemo(() => {
     if (!filtroMes) return registros;
@@ -59,9 +82,7 @@ export default function Projects() {
     [registrosFiltrados]
   );
 
-  const diasTrabalhados = registrosFiltrados.filter(
-    (r) => r.entrada
-  ).length;
+  const diasTrabalhados = registrosFiltrados.filter((r) => r.entrada).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50 p-4 lg:p-8">
@@ -76,7 +97,9 @@ export default function Projects() {
             Histórico
           </h1>
           <p className="text-slate-500">
-            Acompanhe seus registros de ponto anteriores
+            {isAdmin
+              ? "Gerencie e ajuste os registros de ponto"
+              : "Acompanhe seus registros de ponto anteriores"}
           </p>
         </motion.div>
 
@@ -111,11 +134,11 @@ export default function Projects() {
               <p className="text-xs text-slate-500 font-medium mb-1">
                 Filtrar por mês
               </p>
-              <Input
+              <input
                 type="month"
                 value={filtroMes}
                 onChange={(e) => setFiltroMes(e.target.value)}
-                className="border-0 px-0 h-7 text-base font-semibold text-slate-900 focus-visible:ring-0"
+                className="border-0 px-0 h-7 text-base font-semibold text-slate-900 focus:outline-none bg-transparent w-full"
               />
             </CardContent>
           </Card>
@@ -152,7 +175,7 @@ export default function Projects() {
               <p className="text-slate-500">
                 {filtroMes
                   ? "Não há registros para o mês selecionado"
-                  : "Comece registrando seu ponto na aba Registrar Ponto"}
+                  : "Comece registrando ponto na aba Registrar Ponto"}
               </p>
             </CardContent>
           </Card>
@@ -184,16 +207,17 @@ export default function Projects() {
                         <div className="flex items-center justify-between mb-5">
                           <div>
                             <p className="font-semibold text-slate-900">
-                              {getDiaSemana(registro.data)}
+                              {registro.professor_nome || "—"}
                             </p>
                             <p className="text-sm text-slate-500">
+                              {getDiaSemana(registro.data)} •{" "}
                               {formatarDataCurta(registro.data)}
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="text-right">
                               <p className="text-xs text-slate-500">
-                                Horas trabalhadas
+                                Horas
                               </p>
                               <p className="font-bold text-emerald-700 tabular-nums">
                                 {formatarHoras(minutos)}
@@ -207,6 +231,21 @@ export default function Projects() {
                               />
                               {statusConfig.label}
                             </Badge>
+                            {isAdmin && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setAjusteModal({
+                                    open: true,
+                                    registro,
+                                  })
+                                }
+                              >
+                                <Pencil className="w-3.5 h-3.5 mr-1" />
+                                Ajustar
+                              </Button>
+                            )}
                           </div>
                         </div>
 
@@ -243,6 +282,16 @@ export default function Projects() {
                             </div>
                           ))}
                         </div>
+
+                        {/* Ajustado por */}
+                        {registro.ajustado_por && (
+                          <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-2">
+                            <Shield className="w-3.5 h-3.5 text-amber-500" />
+                            <p className="text-xs text-slate-400">
+                              Ajustado por: {registro.ajustado_por}
+                            </p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -252,6 +301,13 @@ export default function Projects() {
           </div>
         )}
       </div>
+
+      <AjusteModal
+        open={ajusteModal.open}
+        onClose={() => setAjusteModal({ open: false, registro: null })}
+        registro={ajusteModal.registro}
+        onSaved={loadRegistros}
+      />
     </div>
   );
 }

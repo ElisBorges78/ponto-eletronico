@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, CheckCircle, XCircle, Loader2, UserCheck } from "lucide-react";
-import { UploadFile, InvokeLLM } from "@/integrations/Core";
+import { UploadFile, InvokeLLM } from "@/api/integrations";
 import { Professor } from "@/entities/Professor";
 import { RegistroPonto } from "@/entities/RegistroPonto";
 import {

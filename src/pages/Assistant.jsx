@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { RegistroPonto } from "@/entities/RegistroPonto";
+import { Professor } from "@/entities/Professor";
+import { User } from "@/entities/User";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   BarChart,
   Bar,
@@ -10,7 +13,15 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp, Calendar, Clock, Award } from "lucide-react";
+import {
+  TrendingUp,
+  Calendar,
+  Clock,
+  Award,
+  Mail,
+  Loader2,
+  CheckCircle,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import {
   startOfWeek,
@@ -20,13 +31,16 @@ import {
   parseISO,
   isSameDay,
   subWeeks,
+  isSameMonth,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SendEmail } from "@/api/integrations";
 import {
   calcularMinutosTrabalhados,
   formatarHoras,
   formatarHorasDecimal,
 } from "@/lib/pontoUtils";
+import { gerarRelatorioHTML } from "@/lib/relatorioEmail";
 
 const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
@@ -38,17 +52,21 @@ function getSemanaAtual(offset = 0) {
 
 export default function Assistant() {
   const [registros, setRegistros] = useState([]);
+  const [professores, setProfessores] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [semanaOffset, setSemanaOffset] = useState(0);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     loadRegistros();
+    loadProfessores();
   }, []);
 
   const loadRegistros = async () => {
     setIsLoading(true);
     try {
-      const data = await RegistroPonto.list("-data", 100);
+      const data = await RegistroPonto.list("-data", 500);
       setRegistros(data);
     } catch (error) {
       console.error("Erro ao carregar registros:", error);
@@ -56,20 +74,30 @@ export default function Assistant() {
     setIsLoading(false);
   };
 
+  const loadProfessores = async () => {
+    try {
+      const data = await Professor.list();
+      setProfessores(data);
+    } catch (error) {
+      console.error("Erro ao carregar professores:", error);
+    }
+  };
+
   const diasSemana = useMemo(() => getSemanaAtual(semanaOffset), [semanaOffset]);
 
   const chartData = useMemo(() => {
     return diasSemana.map((dia) => {
-      const registro = registros.find((r) => {
+      const diaRegistros = registros.filter((r) => {
         try {
           return r.data && isSameDay(parseISO(r.data), dia);
         } catch {
           return false;
         }
       });
-      const minutos = registro
-        ? calcularMinutosTrabalhados(registro)
-        : 0;
+      const minutos = diaRegistros.reduce(
+        (acc, r) => acc + calcularMinutosTrabalhados(r),
+        0
+      );
       return {
         dia: format(dia, "EEE", { locale: ptBR }),
         horas: Number((minutos / 60).toFixed(1)),
@@ -80,7 +108,8 @@ export default function Assistant() {
 
   const totalMinutosSemana = chartData.reduce((acc, d) => acc + d.minutos, 0);
   const diasTrabalhados = chartData.filter((d) => d.minutos > 0).length;
-  const mediaMinutos = diasTrabalhados > 0 ? totalMinutosSemana / diasTrabalhados : 0;
+  const mediaMinutos =
+    diasTrabalhados > 0 ? totalMinutosSemana / diasTrabalhados : 0;
 
   const labelSemana =
     semanaOffset === 0
@@ -88,6 +117,39 @@ export default function Assistant() {
       : semanaOffset === 1
       ? "Semana passada"
       : `${semanaOffset} semanas atrás`;
+
+  const enviarRelatorioEmail = async () => {
+    setIsSendingEmail(true);
+    setEmailSent(false);
+    try {
+      const user = await User.me();
+      const hoje = new Date();
+
+      const registrosMes = registros.filter((r) => {
+        try {
+          const data = parseISO(r.data);
+          return isSameMonth(data, hoje);
+        } catch {
+          return false;
+        }
+      });
+
+      const { html, nomeMes } = gerarRelatorioHTML(registrosMes, hoje);
+
+      await SendEmail({
+        to: user.email,
+        subject: `Relatório de Ponto - ${nomeMes}`,
+        body: html,
+      });
+
+      setEmailSent(true);
+      setTimeout(() => setEmailSent(false), 5000);
+    } catch (error) {
+      console.error("Erro ao enviar relatório:", error);
+      alert("Erro ao enviar relatório por email. Tente novamente.");
+    }
+    setIsSendingEmail(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50 p-4 lg:p-8">
@@ -102,8 +164,69 @@ export default function Assistant() {
             Relatórios
           </h1>
           <p className="text-slate-500">
-            Acompanhe suas horas trabalhadas por semana
+            Acompanhe as horas trabalhadas e envie relatórios por email
           </p>
+        </motion.div>
+
+        {/* Monthly Email Report */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <Card
+            className={`border-0 shadow-md ${
+              emailSent ? "ring-2 ring-emerald-400" : ""
+            }`}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+                    {emailSent ? (
+                      <CheckCircle className="w-6 h-6 text-emerald-600" />
+                    ) : (
+                      <Mail className="w-6 h-6 text-emerald-600" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      Relatório Mensal por Email
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {emailSent
+                        ? "Relatório enviado com sucesso!"
+                        : `Envie o relatório de ${format(new Date(), "MMMM", {
+                            locale: ptBR,
+                          })} para o seu email`}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={enviarRelatorioEmail}
+                  disabled={isSendingEmail}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : emailSent ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Enviado!
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4 mr-2" />
+                      Enviar Relatório
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Week navigation */}

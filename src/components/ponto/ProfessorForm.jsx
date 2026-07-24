@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Camera, Upload, Loader2, Check } from "lucide-react";
-import { UploadFile } from "@/integrations/Core";
+import { UploadFile } from "@/api/integrations";
 
 export default function ProfessorForm({
   open,
