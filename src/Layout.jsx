@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { User } from "@/entities/User";
-import { Clock, Calendar, BarChart3, LogOut, Menu, X, Users } from "lucide-react";
+import { Clock, Calendar, BarChart3, LogOut, Menu, X, Users, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -30,6 +30,12 @@ const navigationItems = [
     url: createPageUrl("Assistant"),
     icon: BarChart3,
     description: "Horas e estatísticas",
+  },
+  {
+    title: "Painel Admin",
+    url: createPageUrl("Admin"),
+    icon: LayoutDashboard,
+    description: "Visão consolidada",
   },
 ];
 
