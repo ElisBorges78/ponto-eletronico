@@ -1,0 +1,45 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 9 1 * *",
+      "one_time_date": null,
+      "timezone": "America/Sao_Paulo",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Relat\u00f3rio Mensal de Ponto",
+  "description": "Envia automaticamente o relat\u00f3rio mensal de ponto por e-mail (Gmail) para os administradores no 1\u00ba dia de cada m\u00eas \u00e0s 9h.",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "relatorio_mensal_ponto",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "enviar_relatorio": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "enviarRelatorioMensal",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Enviar relat\u00f3rio mensal",
+            "description": "Gera e envia o relat\u00f3rio do m\u00eas anterior por Gmail"
+          }
+        }
+      }
+    ]
+  }
+}
