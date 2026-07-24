@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { User } from "@/entities/User";
 import { Clock, Calendar, BarChart3, LogOut, Menu, X, Users, LayoutDashboard } from "lucide-react";
@@ -41,12 +41,13 @@ const navigationItems = [
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     loadUser();
-  }, []);
+  }, [user?.role, currentPageName]);
 
   const loadUser = async () => {
     try {
@@ -61,6 +62,17 @@ export default function Layout({ children, currentPageName }) {
     await User.logout();
     window.location.reload();
   };
+
+  const isAdmin = user?.role === "admin";
+  const visibleNavItems = isAdmin
+    ? navigationItems
+    : navigationItems.filter((item) => item.title === "Registrar Ponto");
+
+  useEffect(() => {
+    if (user && !isAdmin && currentPageName !== "Dashboard") {
+      navigate(createPageUrl("Dashboard"), { replace: true });
+    }
+  }, [user, isAdmin, currentPageName, navigate]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -106,7 +118,7 @@ export default function Layout({ children, currentPageName }) {
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1.5">
-            {navigationItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const isActive = location.pathname === item.url;
               return (
                 <Link
