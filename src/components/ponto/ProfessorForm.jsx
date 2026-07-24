@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Camera, Upload, Loader2, Check } from "lucide-react";
 import { UploadFile } from "@/api/integrations";
+import CameraCapture from "./CameraCapture";
 
 export default function ProfessorForm({
   open,
@@ -29,6 +30,7 @@ export default function ProfessorForm({
   });
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -64,6 +66,17 @@ export default function ProfessorForm({
       setFormData((prev) => ({ ...prev, foto_url: file_url }));
     } catch (error) {
       console.error("Erro ao fazer upload da foto:", error);
+    }
+    setIsUploading(false);
+  };
+
+  const handleCameraCapture = async (file) => {
+    setIsUploading(true);
+    try {
+      const { file_url } = await UploadFile({ file });
+      setFormData((prev) => ({ ...prev, foto_url: file_url }));
+    } catch (error) {
+      console.error("Erro ao salvar foto da câmera:", error);
     }
     setIsUploading(false);
   };
@@ -104,24 +117,41 @@ export default function ProfessorForm({
               onChange={handlePhotoUpload}
               className="hidden"
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  {formData.foto_url ? "Trocar foto" : "Enviar foto"}
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {formData.foto_url ? "Enviar arquivo" : "Enviar arquivo"}
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCameraOpen(true)}
+                disabled={isUploading}
+              >
+                <Camera className="w-4 h-4 mr-2" />
+                {formData.foto_url ? "Tirar foto" : "Tirar foto"}
+              </Button>
+            </div>
+            <CameraCapture
+              open={cameraOpen}
+              onClose={() => setCameraOpen(false)}
+              onCapture={handleCameraCapture}
+            />
             {formData.foto_url && (
               <p className="text-xs text-emerald-600 flex items-center gap-1">
                 <Check className="w-3 h-3" /> Foto cadastrada para Face ID
