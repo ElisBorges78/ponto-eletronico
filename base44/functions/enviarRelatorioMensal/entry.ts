@@ -81,14 +81,18 @@ Deno.serve(async (req) => {
     // Fetch professors for richer data.
     const professores = await base44.asServiceRole.entities.Professor.list();
 
-    // Get admin users to send the report to.
+    // Get users to send the report to: admins and gestores (geral, pedagógico, administrativo).
     const usuarios = await base44.asServiceRole.entities.User.list();
-    const adminEmails = usuarios
-      .filter((u) => u.role === 'admin' && u.email)
-      .map((u) => u.email);
+    const destinatarios = [
+      ...new Set(
+        usuarios
+          .filter((u) => u.email && (u.role === 'admin' || u.tipo_gestor))
+          .map((u) => u.email)
+      ),
+    ];
 
-    if (adminEmails.length === 0) {
-      return Response.json({ error: 'Nenhum administrador encontrado para receber o relatório' }, { status: 400 });
+    if (destinatarios.length === 0) {
+      return Response.json({ error: 'Nenhum gestor ou administrador encontrado para receber o relatório' }, { status: 400 });
     }
 
     // Generate the report HTML.
@@ -111,7 +115,7 @@ Deno.serve(async (req) => {
     const subject = `Relatório de Ponto - ${nomeMes}`;
     const results = [];
 
-    for (const destinatario of adminEmails) {
+    for (const destinatario of destinatarios) {
       const raw = buildRawMime('Ponto Eletrônico', senderEmail, destinatario, subject, html);
 
       const sendRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {

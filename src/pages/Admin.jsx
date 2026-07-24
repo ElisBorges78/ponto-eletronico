@@ -39,6 +39,7 @@ import {
 } from "@/lib/pontoUtils";
 import ProfessorStatsTable from "@/components/ponto/ProfessorStatsTable";
 import SenhaGate from "@/components/ponto/SenhaGate";
+import UserManagement from "@/components/ponto/UserManagement";
 
 export default function Admin() {
   const [registros, setRegistros] = useState([]);
@@ -323,6 +324,16 @@ export default function Admin() {
             professores={professores}
             registrosMes={registrosMes}
           />
+        </motion.div>
+
+        {/* User Management */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mb-8"
+        >
+          <UserManagement />
         </motion.div>
 
         {/* Recent Activity */}

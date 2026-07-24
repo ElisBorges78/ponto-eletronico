@@ -1,0 +1,15 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "tipo_gestor": {
+      "type": "string",
+      "enum": [
+        "geral",
+        "pedagogico",
+        "administrativo"
+      ],
+      "description": "Tipo de gestor para recebimento de relat\u00f3rios mensais"
+    }
+  }
+}
