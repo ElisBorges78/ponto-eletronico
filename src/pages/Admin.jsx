@@ -38,12 +38,19 @@ import {
   STATUS_CONFIG,
 } from "@/lib/pontoUtils";
 import ProfessorStatsTable from "@/components/ponto/ProfessorStatsTable";
+import SenhaGate from "@/components/ponto/SenhaGate";
 
 export default function Admin() {
   const [registros, setRegistros] = useState([]);
   const [professores, setProfessores] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filtroMes, setFiltroMes] = useState(format(new Date(), "yyyy-MM"));
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem("admin_unlocked") === "true");
+
+  const handleUnlock = () => {
+    setUnlocked(true);
+    sessionStorage.setItem("admin_unlocked", "true");
+  };
 
   useEffect(() => {
     loadData();
@@ -127,6 +134,20 @@ export default function Admin() {
       })
       .slice(0, 8);
   }, [registros]);
+
+  if (!unlocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50 p-4">
+        <SenhaGate
+          open={true}
+          onSuccess={handleUnlock}
+          title="Painel Administrativo"
+          description="Digite a senha de administrador para acessar o painel."
+          confirmLabel="Acessar painel"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50 p-4 lg:p-8">

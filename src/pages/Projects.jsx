@@ -12,6 +12,7 @@ import {
   LogOut,
   Shield,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { parseISO } from "date-fns";
@@ -25,6 +26,7 @@ import {
   STATUS_CONFIG,
 } from "@/lib/pontoUtils";
 import AjusteModal from "@/components/ponto/AjusteModal";
+import SenhaGate from "@/components/ponto/SenhaGate";
 
 export default function Projects() {
   const [registros, setRegistros] = useState([]);
@@ -32,6 +34,7 @@ export default function Projects() {
   const [filtroMes, setFiltroMes] = useState("");
   const [user, setUser] = useState(null);
   const [ajusteModal, setAjusteModal] = useState({ open: false, registro: null });
+  const [deleteModal, setDeleteModal] = useState({ open: false, registro: null });
 
   useEffect(() => {
     loadRegistros();
@@ -59,6 +62,18 @@ export default function Projects() {
   };
 
   const isAdmin = user?.role === "admin";
+
+  const handleDeleteConfirm = async () => {
+    const registro = deleteModal.registro;
+    if (!registro) return;
+    try {
+      await RegistroPonto.delete(registro.id);
+      setDeleteModal({ open: false, registro: null });
+      loadRegistros();
+    } catch (error) {
+      console.error("Erro ao excluir registro:", error);
+    }
+  };
 
   const registrosFiltrados = useMemo(() => {
     if (!filtroMes) return registros;
@@ -232,19 +247,35 @@ export default function Projects() {
                               {statusConfig.label}
                             </Badge>
                             {isAdmin && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  setAjusteModal({
-                                    open: true,
-                                    registro,
-                                  })
-                                }
-                              >
-                                <Pencil className="w-3.5 h-3.5 mr-1" />
-                                Ajustar
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    setAjusteModal({
+                                      open: true,
+                                      registro,
+                                    })
+                                  }
+                                >
+                                  <Pencil className="w-3.5 h-3.5 mr-1" />
+                                  Ajustar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                  onClick={() =>
+                                    setDeleteModal({
+                                      open: true,
+                                      registro,
+                                    })
+                                  }
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                  Excluir
+                                </Button>
+                              </>
                             )}
                           </div>
                         </div>
@@ -307,6 +338,15 @@ export default function Projects() {
         onClose={() => setAjusteModal({ open: false, registro: null })}
         registro={ajusteModal.registro}
         onSaved={loadRegistros}
+      />
+
+      <SenhaGate
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, registro: null })}
+        onSuccess={handleDeleteConfirm}
+        title="Excluir registro de ponto"
+        description={`Confirme a senha de administrador para excluir o registro de ${deleteModal.registro?.professor_nome || ""} (${formatarDataCurta(deleteModal.registro?.data)}). Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir registro"
       />
     </div>
   );
