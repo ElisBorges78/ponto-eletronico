@@ -1,0 +1,40 @@
+{
+  "name": "Notifica\u00e7\u00e3o de Regras de Ponto",
+  "description": "Quando as regras de hor\u00e1rio s\u00e3o atualizadas na Configuracao, notifica todos os professores por email",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "Configuracao",
+      "events": [
+        "update"
+      ]
+    },
+    "condition": "${ any((.trigger.changed_fields // [])[]; . == \"hora_abertura\" or . == \"hora_fechamento\" or . == \"regras_descricao\") }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "notificacao_regras_ponto",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "notificar": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "notificarRegrasPonto",
+            "args": {
+              "config_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Notificar professores",
+            "description": "Envia email sobre as novas regras"
+          }
+        }
+      }
+    ]
+  }
+}

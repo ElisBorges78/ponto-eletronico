@@ -114,3 +114,17 @@ export function getSaudacao() {
   if (hora < 18) return "Boa tarde";
   return "Boa noite";
 }
+
+export function verificarHorarioPermitido(config) {
+  if (!config || !config.hora_abertura || !config.hora_fechamento) {
+    return { permitido: true };
+  }
+  const horaAtual = format(new Date(), "HH:mm");
+  const permitido =
+    horaAtual >= config.hora_abertura && horaAtual <= config.hora_fechamento;
+  return {
+    permitido,
+    horaAbertura: config.hora_abertura,
+    horaFechamento: config.hora_fechamento,
+  };
+}

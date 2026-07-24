@@ -10,10 +10,12 @@ import { Camera, CheckCircle, XCircle, Loader2, UserCheck } from "lucide-react";
 import { UploadFile, InvokeLLM } from "@/api/integrations";
 import { Professor } from "@/entities/Professor";
 import { RegistroPonto } from "@/entities/RegistroPonto";
+import { Configuracao } from "@/entities/Configuracao";
 import {
   getDataHoje,
   formatarHora,
   getProximaAcao,
+  verificarHorarioPermitido,
 } from "@/lib/pontoUtils";
 
 export default function FaceIdModal({ open, onClose, onSuccess }) {
@@ -200,6 +202,22 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
   };
 
   const registrarPonto = async (professor) => {
+    try {
+      const configs = await Configuracao.list();
+      if (configs.length > 0) {
+        const restricao = verificarHorarioPermitido(configs[0]);
+        if (!restricao.permitido) {
+          setErrorMessage(
+            `Registro permitido apenas das ${restricao.horaAbertura} às ${restricao.horaFechamento}.`
+          );
+          setStep("error");
+          return null;
+        }
+      }
+    } catch {
+      // Se não houver configuração, permite o registro
+    }
+
     const hoje = getDataHoje();
     const existing = await RegistroPonto.filter({
       data: hoje,
