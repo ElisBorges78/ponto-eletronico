@@ -1,0 +1,44 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "verificacao_diaria_ponto",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "verificar": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "verificarPontoDiario"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Verificar ponto di\u00e1rio",
+            "description": "Envia lembrete a professores sem registro"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Verifica\u00e7\u00e3o Di\u00e1ria de Ponto",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 18 * * *",
+      "one_time_date": null,
+      "timezone": "America/Sao_Paulo",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "description": "Verifica diariamente \u00e0s 18h quais professores n\u00e3o registraram o ponto e envia email de lembrete"
+}

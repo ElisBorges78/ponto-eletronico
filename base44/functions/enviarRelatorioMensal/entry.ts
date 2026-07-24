@@ -1,41 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { gerarRelatorioHTML, nomeMesAno } from '../../shared/relatorioUtils.ts';
-
-function toBase64Url(str) {
-  const b64 = btoa(unescape(encodeURIComponent(str)));
-  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function buildRawMime(fromName, fromEmail, toEmail, subject, html) {
-  const boundary = 'ponto_relatorio_' + Date.now();
-  const hasNonAscii = /[^\x00-\x7F]/.test(subject);
-  const encodedSubject = hasNonAscii
-    ? `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`
-    : subject;
-  const htmlB64 = btoa(unescape(encodeURIComponent(html)));
-
-  const lines = [
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    `MIME-Version: 1.0`,
-  ];
-  if (fromEmail) {
-    lines.push(`From: ${fromName ? `${fromName} ` : ''}<${fromEmail}>`);
-  }
-  lines.push(
-    `To: ${toEmail}`,
-    `Subject: ${encodedSubject}`,
-    ``,
-    `--${boundary}`,
-    `Content-Type: text/html; charset=UTF-8`,
-    `Content-Transfer-Encoding: base64`,
-    ``,
-    htmlB64,
-    `--${boundary}--`,
-    ``,
-  );
-
-  return toBase64Url(lines.join('\r\n'));
-}
+import { getGmailSenderEmail, sendGmailEmail } from '../../shared/gmailUtils.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -100,39 +65,15 @@ Deno.serve(async (req) => {
 
     // Get the Gmail OAuth access token (SHARED connector — builder's account).
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('gmail');
-
-    // Resolve the sender's Gmail address.
-    const profileRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    let senderEmail = '';
-    if (profileRes.ok) {
-      const profile = await profileRes.json();
-      senderEmail = profile.emailAddress || '';
-    }
+    const senderEmail = await getGmailSenderEmail(accessToken);
 
     // Build and send the MIME message to each admin.
     const subject = `Relatório de Ponto - ${nomeMes}`;
     const results = [];
 
     for (const destinatario of destinatarios) {
-      const raw = buildRawMime('Ponto Eletrônico', senderEmail, destinatario, subject, html);
-
-      const sendRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ raw }),
-      });
-
-      if (!sendRes.ok) {
-        const errText = await sendRes.text();
-        results.push({ destinatario, success: false, error: errText });
-      } else {
-        results.push({ destinatario, success: true });
-      }
+      const result = await sendGmailEmail(accessToken, 'Ponto Eletrônico', senderEmail, destinatario, subject, html);
+      results.push({ destinatario, ...result });
     }
 
     return Response.json({
