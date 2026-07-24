@@ -44,9 +44,14 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 640, height: 480 },
       });
+      streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        streamRef.current = stream;
+        await videoRef.current.play().catch(() => {});
+        await new Promise((resolve) => {
+          if (videoRef.current.readyState >= 2) return resolve();
+          videoRef.current.onloadeddata = () => resolve();
+        });
       }
     } catch (error) {
       setErrorMessage(
@@ -68,10 +73,27 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    // Garante que o vídeo tem dimensões válidas antes de capturar
+    if (!video.videoWidth || video.videoWidth === 0) {
+      await new Promise((resolve) => {
+        if (video.videoWidth > 0) return resolve();
+        video.onloadeddata = () => resolve();
+        setTimeout(resolve, 3000);
+      });
+    }
+
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 480;
+    if (width === 0 || height === 0) {
+      setErrorMessage("Câmera não está pronta. Tente novamente.");
+      setStep("error");
+      return;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, width, height);
 
     stopCamera();
     setStep("verifying");
@@ -81,7 +103,14 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
         canvas.toBlob(resolve, "image/jpeg", 0.8)
       );
 
-      const { file_url } = await UploadFile({ file: blob });
+      if (!blob) {
+        setErrorMessage("Falha ao capturar a imagem. Tente novamente.");
+        setStep("error");
+        return;
+      }
+
+      const file = new File([blob], "face_id.jpg", { type: "image/jpeg" });
+      const { file_url } = await UploadFile({ file });
 
       const professors = await Professor.filter({ ativo: true });
       const profsWithPhotos = professors.filter((p) => p.foto_url);
