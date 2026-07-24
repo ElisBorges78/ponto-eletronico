@@ -115,7 +115,7 @@ export default function Layout({ children, currentPageName }) {
                           : "bg-slate-100 text-slate-500 group-hover:text-slate-700"
                       }`}
                     >
-                      <item.icon className="w-4.5 h-4.5" />
+                      <item.icon className="w-5 h-5" />
                     </div>
                     <div>
                       <p
