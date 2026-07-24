@@ -1,0 +1,32 @@
+{
+  "name": "Configuracao",
+  "type": "object",
+  "properties": {
+    "senha_admin": {
+      "type": "string",
+      "description": "Senha de acesso ao painel administrativo"
+    }
+  },
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

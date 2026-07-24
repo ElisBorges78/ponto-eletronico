@@ -15,8 +15,21 @@ Deno.serve(async (req) => {
       return Response.json({ valid: false }, { status: 400 });
     }
 
-    const adminPassword = Deno.env.get('ADMIN_PASSWORD');
-    const valid = !!adminPassword && senha === adminPassword;
+    let storedPassword: string | null = null;
+    try {
+      const configs = await base44.asServiceRole.entities.Configuracao.list();
+      if (configs.length > 0 && configs[0].senha_admin) {
+        storedPassword = configs[0].senha_admin;
+      }
+    } catch {
+      // Entity might not have records yet
+    }
+
+    if (!storedPassword) {
+      storedPassword = Deno.env.get('ADMIN_PASSWORD') || null;
+    }
+
+    const valid = !!storedPassword && senha === storedPassword;
 
     return Response.json({ valid });
   } catch (error) {
