@@ -5,14 +5,35 @@
     "senha_admin": {
       "type": "string",
       "description": "Senha de acesso ao painel administrativo"
+    },
+    "restricoes_ativas": {
+      "type": "boolean",
+      "default": false,
+      "description": "Se as restri\u00e7\u00f5es de hor\u00e1rio est\u00e3o ativas"
+    },
+    "hora_min_entrada": {
+      "type": "string",
+      "description": "Hor\u00e1rio m\u00ednimo para registrar entrada (HH:MM)"
+    },
+    "hora_max_entrada": {
+      "type": "string",
+      "description": "Hor\u00e1rio m\u00e1ximo para registrar entrada (HH:MM)"
+    },
+    "hora_min_saida": {
+      "type": "string",
+      "description": "Hor\u00e1rio m\u00ednimo para registrar sa\u00edda (HH:MM)"
+    },
+    "hora_max_saida": {
+      "type": "string",
+      "description": "Hor\u00e1rio m\u00e1ximo para registrar sa\u00edda (HH:MM)"
+    },
+    "mensagem_regras": {
+      "type": "string",
+      "description": "Mensagem com as regras enviada aos professores"
     }
   },
   "rls": {
-    "read": {
-      "user_condition": {
-        "role": "admin"
-      }
-    },
+    "read": {},
     "create": {
       "user_condition": {
         "role": "admin"
