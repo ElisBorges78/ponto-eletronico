@@ -25,6 +25,7 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
   const [matchedProfessor, setMatchedProfessor] = useState(null);
   const [acaoRegistrada, setAcaoRegistrada] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
 
   useEffect(() => {
     if (open) {
@@ -32,6 +33,7 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
       setMatchedProfessor(null);
       setErrorMessage("");
       setAcaoRegistrada("");
+      setCapturedPhoto(null);
       startCamera();
     } else {
       stopCamera();
@@ -41,16 +43,28 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
 
   const startCamera = async () => {
     try {
+      // Aguarda o elemento de vídeo estar disponível no DOM
+      await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 640, height: 480 },
       });
       streamRef.current = stream;
+
+      // Tenta anexar o stream ao vídeo, com retry caso o elemento ainda não exista
+      let attempts = 0;
+      while (!videoRef.current && attempts < 10) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        attempts++;
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => {});
         await new Promise((resolve) => {
           if (videoRef.current.readyState >= 2) return resolve();
           videoRef.current.onloadeddata = () => resolve();
+          setTimeout(resolve, 3000);
         });
       }
     } catch (error) {
@@ -68,24 +82,15 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
     }
   };
 
-  const capturePhoto = async () => {
+  const capturePhoto = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    // Garante que o vídeo tem dimensões válidas antes de capturar
-    if (!video.videoWidth || video.videoWidth === 0) {
-      await new Promise((resolve) => {
-        if (video.videoWidth > 0) return resolve();
-        video.onloadeddata = () => resolve();
-        setTimeout(resolve, 3000);
-      });
-    }
-
     const width = video.videoWidth || 640;
     const height = video.videoHeight || 480;
     if (width === 0 || height === 0) {
-      setErrorMessage("Câmera não está pronta. Tente novamente.");
+      setErrorMessage("Câmera não está pronta. Aguarde o vídeo aparecer e tente novamente.");
       setStep("error");
       return;
     }
@@ -95,16 +100,29 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0, width, height);
 
+    // Gera pré-visualização da foto capturada
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+    setCapturedPhoto(dataUrl);
     stopCamera();
+    setStep("preview");
+  };
+
+  const retakePhoto = () => {
+    setCapturedPhoto(null);
+    setStep("camera");
+    startCamera();
+  };
+
+  const confirmAndProcess = async () => {
     setStep("verifying");
 
     try {
       const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", 0.8)
+        canvasRef.current.toBlob(resolve, "image/jpeg", 0.8)
       );
 
       if (!blob) {
-        setErrorMessage("Falha ao capturar a imagem. Tente novamente.");
+        setErrorMessage("Falha ao processar a imagem. Tente novamente.");
         setStep("error");
         return;
       }
@@ -131,11 +149,12 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
       const result = await InvokeLLM({
         prompt: `A Imagem 1 é uma foto capturada agora em um relógio de ponto. As imagens seguintes são fotos de referência de professores cadastrados:\n${professorList}\n\nCompare a foto capturada (Imagem 1) com cada foto de referência. Identifique qual professor corresponde à pessoa na foto capturada. Se houver correspondência, retorne o nome exato do professor. Responda em JSON: { "match": boolean, "professor_nome": string ou null, "confianca": number de 0 a 1 }`,
         file_urls: allPhotos,
+        model: "gemini_3_flash",
         response_json_schema: {
           type: "object",
           properties: {
             match: { type: "boolean" },
-            professor_nome: { type: "string" },
+            professor_nome: { type: ["string", "null"] },
             confianca: { type: "number" },
           },
         },
@@ -232,6 +251,7 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
     setStep("camera");
     setMatchedProfessor(null);
     setErrorMessage("");
+    setCapturedPhoto(null);
     startCamera();
   };
 
@@ -271,6 +291,36 @@ export default function FaceIdModal({ open, onClose, onSuccess }) {
               <Camera className="w-5 h-5 mr-2" />
               Capturar Foto
             </Button>
+          </div>
+        )}
+
+        {step === "preview" && capturedPhoto && (
+          <div className="space-y-4">
+            <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden">
+              <img
+                src={capturedPhoto}
+                alt="Foto capturada"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <p className="text-sm text-slate-500 text-center">
+              Confirme se a foto está nítida e o rosto visível
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={retakePhoto}
+                variant="outline"
+                className="flex-1"
+              >
+                Tirar outra
+              </Button>
+              <Button
+                onClick={confirmAndProcess}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+              >
+                Confirmar e verificar
+              </Button>
+            </div>
           </div>
         )}
 
