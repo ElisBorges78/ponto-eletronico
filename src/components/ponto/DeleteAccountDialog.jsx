@@ -23,7 +23,9 @@ export default function DeleteAccountDialog({ open, onClose }) {
       await User.logout();
       window.location.reload();
     } catch (e) {
-      setError(e.message || "Não foi possível excluir a conta.");
+      setError(
+        "Não foi possível excluir a conta automaticamente. A exclusão definitiva da conta deve ser feita nas Configurações de Conta da Base44 (ícone de perfil → Account settings → Delete account)."
+      );
       setLoading(false);
     }
   };
