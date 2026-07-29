@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { hashPassword, verifyPassword } from '../../shared/passwordUtils.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -44,17 +45,19 @@ Deno.serve(async (req) => {
       storedPassword = Deno.env.get('ADMIN_PASSWORD') || null;
     }
 
-    if (senhaAtual !== storedPassword) {
+    if (!(await verifyPassword(senhaAtual, storedPassword))) {
       return Response.json({ error: 'Senha atual incorreta' }, { status: 400 });
     }
 
+    const hashedPassword = await hashPassword(novaSenha);
+
     if (configId) {
       await base44.asServiceRole.entities.Configuracao.update(configId, {
-        senha_admin: novaSenha,
+        senha_admin: hashedPassword,
       });
     } else {
       await base44.asServiceRole.entities.Configuracao.create({
-        senha_admin: novaSenha,
+        senha_admin: hashedPassword,
       });
     }
 

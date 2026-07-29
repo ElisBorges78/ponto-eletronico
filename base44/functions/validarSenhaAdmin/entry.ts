@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { verifyPassword } from '../../shared/passwordUtils.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
       storedPassword = Deno.env.get('ADMIN_PASSWORD') || null;
     }
 
-    const valid = !!storedPassword && senha === storedPassword;
+    const valid = !!storedPassword && (await verifyPassword(senha, storedPassword));
 
     return Response.json({ valid });
   } catch (error) {
