@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { Professor } from "@/entities/Professor";
+import { User as UserEntity } from "@/entities/User";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Plus, Pencil, Trash2, Mail, Phone, Camera, Building2 } from "lucide-react";
+import {
+  User,
+  Plus,
+  Pencil,
+  Trash2,
+  Mail,
+  Phone,
+  Camera,
+  Building2,
+  Check,
+  X,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfessorForm from "@/components/ponto/ProfessorForm";
 
@@ -12,10 +25,21 @@ export default function Professores() {
   const [isLoading, setIsLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [editingProfessor, setEditingProfessor] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => {
     loadProfessores();
+    loadUser();
   }, []);
+
+  const loadUser = async () => {
+    try {
+      setCurrentUser(await UserEntity.me());
+    } catch {
+      // not logged in
+    }
+  };
 
   const loadProfessores = async () => {
     setIsLoading(true);
@@ -28,12 +52,20 @@ export default function Professores() {
     setIsLoading(false);
   };
 
+  const isAdmin = currentUser?.role === "admin";
+  const isGestor = !!currentUser?.tipo_gestor;
+  const canApprove = isAdmin || isGestor;
+
   const handleSave = async (formData) => {
     try {
       if (editingProfessor) {
         await Professor.update(editingProfessor.id, formData);
       } else {
-        await Professor.create(formData);
+        await Professor.create({
+          ...formData,
+          status_aprovacao: "pendente",
+          ativo: false,
+        });
       }
       setFormOpen(false);
       setEditingProfessor(null);
@@ -59,6 +91,59 @@ export default function Professores() {
     setFormOpen(true);
   };
 
+  const handleAprovar = async (professor) => {
+    setActionLoading(professor.id);
+    try {
+      await base44.functions.invoke("aprovarProfessor", {
+        professorId: professor.id,
+        acao: "aprovar",
+      });
+      loadProfessores();
+    } catch (error) {
+      console.error("Erro ao aprovar:", error);
+    }
+    setActionLoading(null);
+  };
+
+  const handleRejeitar = async (professor) => {
+    setActionLoading(professor.id);
+    try {
+      await base44.functions.invoke("aprovarProfessor", {
+        professorId: professor.id,
+        acao: "rejeitar",
+      });
+      loadProfessores();
+    } catch (error) {
+      console.error("Erro ao rejeitar:", error);
+    }
+    setActionLoading(null);
+  };
+
+  const renderStatusBadge = (prof) => {
+    if (prof.status_aprovacao === "pendente") {
+      return (
+        <Badge className="text-xs flex-shrink-0 bg-amber-50 text-amber-700 border-0">
+          Pendente
+        </Badge>
+      );
+    }
+    if (prof.status_aprovacao === "rejeitado") {
+      return (
+        <Badge className="text-xs flex-shrink-0 bg-red-50 text-red-700 border-0">
+          Rejeitado
+        </Badge>
+      );
+    }
+    return (
+      <Badge
+        variant={prof.ativo ? "default" : "secondary"}
+        className="text-xs flex-shrink-0"
+      >
+        {prof.ativo ? "Ativo" : "Inativo"}
+      </Badge>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50 p-4 lg:p-8">
       <div className="max-w-4xl mx-auto">
@@ -68,15 +153,19 @@ export default function Professores() {
               Professores
             </h1>
             <p className="text-slate-500">
-              Cadastre professores com foto para habilitar a batida por Face ID
+              {isAdmin
+                ? "Cadastre professores e aprove os cadastros pendentes"
+                : "Aprove os cadastros pendentes dos professores"}
             </p>
           </div>
-          <Button
-            onClick={handleAdd}
-            className="bg-emerald-600 hover:bg-emerald-700"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Cadastrar
-          </Button>
+          {isAdmin && (
+            <Button
+              onClick={handleAdd}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Cadastrar
+            </Button>
+          )}
         </div>
 
         {isLoading ? (
@@ -99,15 +188,18 @@ export default function Professores() {
                 Nenhum professor cadastrado
               </h3>
               <p className="text-slate-500 mb-4">
-                Cadastre professores com foto para habilitar a batida por Face
-                ID
+                {isAdmin
+                  ? "Cadastre professores com foto para habilitar a batida por Face ID"
+                  : "Não há cadastros para aprovar no momento"}
               </p>
-              <Button
-                onClick={handleAdd}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <Plus className="w-4 h-4 mr-2" /> Cadastrar Professor
-              </Button>
+              {isAdmin && (
+                <Button
+                  onClick={handleAdd}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Cadastrar Professor
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -146,12 +238,7 @@ export default function Professores() {
                                 </p>
                               )}
                             </div>
-                            <Badge
-                              variant={prof.ativo ? "default" : "secondary"}
-                              className="text-xs flex-shrink-0"
-                            >
-                              {prof.ativo ? "Ativo" : "Inativo"}
-                            </Badge>
+                            {renderStatusBadge(prof)}
                           </div>
                           <div className="mt-2 space-y-1">
                             {prof.email && (
@@ -170,22 +257,49 @@ export default function Professores() {
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 mt-3">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(prof)}
-                            >
-                              <Pencil className="w-3.5 h-3.5 mr-1" /> Editar
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="text-red-500 hover:text-red-700"
-                              onClick={() => handleDelete(prof)}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                          <div className="flex items-center gap-2 mt-3 flex-wrap">
+                            {prof.status_aprovacao === "pendente" &&
+                              canApprove && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                                    onClick={() => handleAprovar(prof)}
+                                    disabled={actionLoading === prof.id}
+                                  >
+                                    <Check className="w-3.5 h-3.5 mr-1" /> Aprovar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-500 border-red-200 hover:bg-red-50"
+                                    onClick={() => handleRejeitar(prof)}
+                                    disabled={actionLoading === prof.id}
+                                  >
+                                    <X className="w-3.5 h-3.5 mr-1" /> Rejeitar
+                                  </Button>
+                                </>
+                              )}
+                            {isAdmin && prof.status_aprovacao !== "pendente" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEdit(prof)}
+                              >
+                                <Pencil className="w-3.5 h-3.5 mr-1" /> Editar
+                              </Button>
+                            )}
+                            {isAdmin && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => handleDelete(prof)}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
                             {!prof.foto_url && (
                               <span className="text-xs text-amber-600 flex items-center gap-1 ml-auto">
                                 <Camera className="w-3 h-3" /> Sem foto

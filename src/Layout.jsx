@@ -64,15 +64,30 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const isAdmin = user?.role === "admin";
-  const visibleNavItems = isAdmin
-    ? navigationItems
+  const isGestor = !!user?.tipo_gestor;
+  const canManageProfessores = isAdmin || isGestor;
+  const visibleNavItems = canManageProfessores
+    ? navigationItems.filter(
+        (item) =>
+          isAdmin ||
+          item.title === "Registrar Ponto" ||
+          item.title === "Professores"
+      )
     : navigationItems.filter((item) => item.title === "Registrar Ponto");
 
   useEffect(() => {
-    if (user && !isAdmin && currentPageName !== "Dashboard") {
+    if (user && !canManageProfessores && currentPageName !== "Dashboard") {
       navigate(createPageUrl("Dashboard"), { replace: true });
     }
-  }, [user, isAdmin, currentPageName, navigate]);
+    if (
+      user &&
+      isGestor &&
+      !isAdmin &&
+      !["Dashboard", "Professores"].includes(currentPageName)
+    ) {
+      navigate(createPageUrl("Dashboard"), { replace: true });
+    }
+  }, [user, isAdmin, isGestor, canManageProfessores, currentPageName, navigate]);
 
   return (
     <div className="min-h-screen bg-slate-50">

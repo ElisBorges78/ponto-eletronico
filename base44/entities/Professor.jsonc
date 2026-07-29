@@ -31,10 +31,24 @@
       "default": "IEMA Pleno Cururupu",
       "description": "Unidade/Campus de v\u00ednculo do professor"
     },
+    "status_aprovacao": {
+      "type": "string",
+      "enum": [
+        "pendente",
+        "aprovado",
+        "rejeitado"
+      ],
+      "default": "pendente",
+      "description": "Status de aprova\u00e7\u00e3o do cadastro pelo gestor"
+    },
+    "aprovado_por": {
+      "type": "string",
+      "description": "Email do gestor/admin que aprovou o cadastro"
+    },
     "ativo": {
       "type": "boolean",
-      "default": true,
-      "description": "Se o professor est\u00e1 ativo"
+      "default": false,
+      "description": "Se o professor est\u00e1 ativo (aprovado)"
     }
   },
   "required": [
