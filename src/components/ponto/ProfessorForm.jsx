@@ -26,6 +26,7 @@ export default function ProfessorForm({
     matricula: "",
     disciplina: "",
     foto_url: "",
+    unidade: "IEMA Pleno Cururupu",
     ativo: true,
   });
   const [isUploading, setIsUploading] = useState(false);
@@ -42,6 +43,7 @@ export default function ProfessorForm({
         matricula: professor.matricula || "",
         disciplina: professor.disciplina || "",
         foto_url: professor.foto_url || "",
+        unidade: professor.unidade || "IEMA Pleno Cururupu",
         ativo: professor.ativo !== false,
       });
     } else {
@@ -52,6 +54,7 @@ export default function ProfessorForm({
         matricula: "",
         disciplina: "",
         foto_url: "",
+        unidade: "IEMA Pleno Cururupu",
         ativo: true,
       });
     }
@@ -215,6 +218,17 @@ export default function ProfessorForm({
                   setFormData({ ...formData, telefone: e.target.value })
                 }
                 placeholder="(00) 00000-0000"
+              />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="unidade">Unidade/Campus</Label>
+              <Input
+                id="unidade"
+                value={formData.unidade}
+                onChange={(e) =>
+                  setFormData({ ...formData, unidade: e.target.value })
+                }
+                placeholder="Ex: IEMA Pleno Cururupu"
               />
             </div>
           </div>

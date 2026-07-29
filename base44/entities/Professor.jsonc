@@ -26,6 +26,11 @@
       "type": "string",
       "description": "URL da foto de refer\u00eancia para Face ID"
     },
+    "unidade": {
+      "type": "string",
+      "default": "IEMA Pleno Cururupu",
+      "description": "Unidade/Campus de v\u00ednculo do professor"
+    },
     "ativo": {
       "type": "boolean",
       "default": true,

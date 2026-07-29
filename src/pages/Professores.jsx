@@ -3,7 +3,7 @@ import { Professor } from "@/entities/Professor";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Plus, Pencil, Trash2, Mail, Phone, Camera } from "lucide-react";
+import { User, Plus, Pencil, Trash2, Mail, Phone, Camera, Building2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProfessorForm from "@/components/ponto/ProfessorForm";
 
@@ -162,6 +162,11 @@ export default function Professores() {
                             {prof.telefone && (
                               <p className="text-xs text-slate-500 flex items-center gap-1">
                                 <Phone className="w-3 h-3" /> {prof.telefone}
+                              </p>
+                            )}
+                            {prof.unidade && (
+                              <p className="text-xs text-emerald-600 flex items-center gap-1 font-medium">
+                                <Building2 className="w-3 h-3" /> {prof.unidade}
                               </p>
                             )}
                           </div>
