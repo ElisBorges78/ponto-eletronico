@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getGmailSenderEmail, sendGmailEmail } from '../../shared/gmailUtils.ts';
 import { authorizeAdminOrWorkflow } from '../../shared/authGuard.ts';
+import { escapeHtml } from '../../shared/relatorioUtils.ts';
 
 function getTodayDateString(timezone: string): string {
   const now = new Date();
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
             <h1 style="color: white; margin: 0; font-size: 20px;">Ponto Eletrônico</h1>
           </div>
           <div style="background: white; border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
-            <p style="color: #1e293b; font-size: 16px;">Olá, <strong>${professor.nome}</strong>!</p>
+            <p style="color: #1e293b; font-size: 16px;">Olá, <strong>${escapeHtml(professor.nome)}</strong>!</p>
             <p style="color: #475569; font-size: 15px; line-height: 1.6;">
               Notamos que você ainda não registrou seu ponto hoje (<strong>${hoje}</strong>).
             </p>
