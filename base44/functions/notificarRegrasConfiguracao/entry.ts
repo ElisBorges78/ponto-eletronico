@@ -1,23 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getGmailSenderEmail, sendGmailEmail } from '../../shared/gmailUtils.ts';
+import { authorizeAdminOrWorkflow } from '../../shared/authGuard.ts';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    let isWorkflowCall = false;
-    try {
-      const user = await base44.auth.me();
-      if (user && user.role !== 'admin') {
-        return Response.json(
-          { error: 'Forbidden: admin access required' },
-          { status: 403 }
-        );
-      }
-      if (!user) isWorkflowCall = true;
-    } catch {
-      isWorkflowCall = true;
-    }
+    const auth = await authorizeAdminOrWorkflow(base44);
+    if (!auth.allowed) return auth.response;
+    const isWorkflowCall = auth.isWorkflowCall;
 
     const configs = await base44.asServiceRole.entities.Configuracao.list();
     if (configs.length === 0) {
