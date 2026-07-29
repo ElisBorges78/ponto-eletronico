@@ -1,0 +1,40 @@
+{
+  "name": "Alerta de Novo Professor",
+  "description": "Notifica gestores e administradores por e-mail quando um novo professor \u00e9 cadastrado e aguarda aprova\u00e7\u00e3o",
+  "trigger": {
+    "config": {
+      "trigger_type": "entity",
+      "entity_name": "Professor",
+      "events": [
+        "create"
+      ]
+    },
+    "condition": "${ .trigger.data.status_aprovacao == \"pendente\" }"
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "alerta_novo_professor",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "notificar_gestores": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "notificarNovoProfessor",
+            "args": {
+              "professor_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Notificar gestores",
+            "description": "Envia e-mail de alerta sobre o novo cadastro"
+          }
+        }
+      }
+    ]
+  }
+}

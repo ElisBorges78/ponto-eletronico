@@ -80,10 +80,30 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  button,
+  [role="button"],
+  header,
+  nav,
+  [role="menu"],
+  [role="menuitem"],
+  svg {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  @media (max-width: 1023px) {
+    button,
+    [role="button"] {
+      min-height: 44px;
+    }
   }
 }
