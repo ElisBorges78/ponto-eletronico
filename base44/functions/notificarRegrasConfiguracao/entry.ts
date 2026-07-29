@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 import { getGmailSenderEmail, sendGmailEmail } from '../../shared/gmailUtils.ts';
 import { authorizeAdminOrWorkflow } from '../../shared/authGuard.ts';
+import { escapeHtml } from '../../shared/relatorioUtils.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -41,12 +42,12 @@ Deno.serve(async (req) => {
     if (config.restricoes_ativas) {
       if (config.hora_min_entrada && config.hora_max_entrada) {
         restricoes.push(
-          `<li>Entrada permitida: <strong>${config.hora_min_entrada}</strong> às <strong>${config.hora_max_entrada}</strong></li>`
+          `<li>Entrada permitida: <strong>${escapeHtml(config.hora_min_entrada)}</strong> às <strong>${escapeHtml(config.hora_max_entrada)}</strong></li>`
         );
       }
       if (config.hora_min_saida && config.hora_max_saida) {
         restricoes.push(
-          `<li>Saída permitida: <strong>${config.hora_min_saida}</strong> às <strong>${config.hora_max_saida}</strong></li>`
+          `<li>Saída permitida: <strong>${escapeHtml(config.hora_min_saida)}</strong> às <strong>${escapeHtml(config.hora_max_saida)}</strong></li>`
         );
       }
     }
@@ -65,14 +66,14 @@ Deno.serve(async (req) => {
             <h1 style="color: white; margin: 0; font-size: 20px;">Ponto Eletrônico</h1>
           </div>
           <div style="background: white; border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
-            <p style="color: #1e293b; font-size: 16px;">Olá, <strong>${professor.nome}</strong>!</p>
+            <p style="color: #1e293b; font-size: 16px;">Olá, <strong>${escapeHtml(professor.nome)}</strong>!</p>
             <p style="color: #475569; font-size: 15px; line-height: 1.6;">
               As regras de registro de ponto foram atualizadas. Confira as novas diretrizes:
             </p>
             ${restricoesHtml}
             ${
               mensagemCustom
-                ? `<div style="background: #f0fdf4; border-left: 3px solid #059669; padding: 12px 16px; margin: 16px 0; border-radius: 0 8px 8px 0;"><p style="color: #1e293b; font-size: 14px; margin: 0;">${mensagemCustom}</p></div>`
+                ? `<div style="background: #f0fdf4; border-left: 3px solid #059669; padding: 12px 16px; margin: 16px 0; border-radius: 0 8px 8px 0;"><p style="color: #1e293b; font-size: 14px; margin: 0;">${escapeHtml(mensagemCustom)}</p></div>`
                 : ''
             }
             <p style="color: #475569; font-size: 14px; margin-top: 16px;">Em caso de dúvidas, entre em contato com a administração.</p>

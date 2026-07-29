@@ -6,6 +6,16 @@ const MESES_PT = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
+export function escapeHtml(value) {
+  if (value == null) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function parseISO(value) {
   if (!value) return null;
   try {
@@ -106,7 +116,7 @@ export function gerarRelatorioHTML(registros, dataRef) {
     const bg = i % 2 === 0 ? "#ffffff" : "#f9fafb";
     html += `
       <tr style="background: ${bg};">
-        <td style="padding: 8px 10px; border: 1px solid #ddd;">${nome}</td>
+        <td style="padding: 8px 10px; border: 1px solid #ddd;">${escapeHtml(nome)}</td>
         <td style="padding: 8px 10px; border: 1px solid #ddd; text-align: center;">${regs.length}</td>
         <td style="padding: 8px 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">${formatarHoras(totalMin)}</td>
       </tr>`;
@@ -126,7 +136,7 @@ export function gerarRelatorioHTML(registros, dataRef) {
   Object.entries(porProfessor).forEach(([nome, regs]) => {
     const totalMin = regs.reduce((acc, r) => acc + calcularMinutosTrabalhados(r), 0);
     html += `
-      <h3 style="color: #333; margin-top: 20px;">${nome} - ${formatarHoras(totalMin)}</h3>
+      <h3 style="color: #333; margin-top: 20px;">${escapeHtml(nome)} - ${formatarHoras(totalMin)}</h3>
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
         <thead>
           <tr style="background: #f8fafc;">
