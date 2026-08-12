@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
 
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('gmail');
     const senderEmail = await getGmailSenderEmail(accessToken);
-    const subject = `Novo cadastro pendente: ${professor.nome}`;
+    const subject = `Novo cadastro pendente: ${(professor.nome || 'Novo professor').replace(/[\r\n]/g, ' ')}`;
     const results = [];
 
     for (const destinatario of destinatarios) {
